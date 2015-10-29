@@ -44,6 +44,9 @@ import android.widget.Adapter;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /**
  * Base class that can be used to implement virtualized lists of items. A list
  * does not have a spatial definition here. For instance, subclases of this
@@ -475,7 +478,13 @@ public abstract class PLA_AbsListView extends PLA_AdapterView<ListAdapter> imple
 
         setVerticalScrollBarEnabled(true);
         TypedArray a = context.obtainStyledAttributes(R.styleable.View);
-        initializeScrollbars(a);
+        try {
+            // initializeScrollbars(TypedArray)
+            Method initializeScrollbars = android.view.View.class.getDeclaredMethod("initializeScrollbars", TypedArray.class);
+            initializeScrollbars.invoke(this, a);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         a.recycle();
     }
 

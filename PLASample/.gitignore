@@ -10,3 +10,5 @@ tmp/
 .idea
 .jhw-cache
 hardcopy.*
+*~
+*.swp
