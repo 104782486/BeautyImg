@@ -1,8 +1,11 @@
 package com.huewu.pla.sample;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
 import me.maxwin.view.XListView;
 import me.maxwin.view.XListView.IXListViewListener;
 import android.annotation.SuppressLint;
@@ -21,6 +24,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.dodola.model.DuitangInfo;
 import com.dodowaterfall.widget.ScaleImageView;
 import com.example.android.bitmapfun.util.ImageFetcher;
@@ -32,7 +36,7 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
     private ImageFetcher mImageFetcher;
     private XListView mAdapterView = null;
     private StaggeredAdapter mAdapter = null;
-    private int currentPage = 0;
+    private int currentPage = 1;
     private List<String> albumurl = new ArrayList<String>();
     ContentTask task = new ContentTask(this, 2);
 
@@ -50,7 +54,7 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
         @Override
         protected List<DuitangInfo> doInBackground(String... params) {
 			List<DuitangInfo> list = new ArrayList<DuitangInfo>();
-        	String htmlContent = GetHtmlContent.htmlContent("http://www.5442.com/meinv/");
+        	String htmlContent = GetHtmlContent.htmlContent(params[0]);
         	if (htmlContent.contains("container")) {
 				htmlContent = htmlContent.substring(
 						htmlContent.indexOf("container"),
@@ -101,10 +105,11 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
         @Override
         protected void onPostExecute(List<DuitangInfo> result) {
             if (mType == 1) {
-
+            	mAdapterView.setRefreshTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
                 mAdapter.addItemTop(result);
                 mAdapter.notifyDataSetChanged();
                 mAdapterView.stopRefresh();
+                
 
             } else if (mType == 2) {
                 mAdapterView.stopLoadMore();
@@ -129,7 +134,7 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
      */
     private void AddItemToContainer(int pageindex, int type) {
         if (task.getStatus() != Status.RUNNING) {
-            String url = "http://www.duitang.com/album/1733789/masn/p/" + pageindex + "/24/";
+            String url = "http://m.5442.com/meinv/list_1_"+pageindex+".html";
             Log.d("MainActivity", "current url:" + url);
             ContentTask task = new ContentTask(this, type);
             task.execute(url);
@@ -208,8 +213,8 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.act_pull_to_refresh_sample);
         mAdapterView = (XListView) findViewById(R.id.list);
-        mAdapterView.setPullLoadEnable(false);
-        mAdapterView.setPullRefreshEnable(false);
+        mAdapterView.setPullLoadEnable(true);
+        mAdapterView.setPullRefreshEnable(true);
         mAdapterView.setXListViewListener(this);
 
         mAdapter = new StaggeredAdapter(this, mAdapterView);
@@ -228,6 +233,12 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
 				startActivity(intent);
 			}
 		});
+        
+        
+        mAdapterView.setRefreshTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        mImageFetcher.setExitTasksEarly(false);
+        mAdapterView.setAdapter(mAdapter);
+        AddItemToContainer(currentPage, 2);
     }
 
     @Override
@@ -243,9 +254,6 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
     @Override
     protected void onResume() {
         super.onResume();
-        mImageFetcher.setExitTasksEarly(false);
-        mAdapterView.setAdapter(mAdapter);
-        AddItemToContainer(currentPage, 2);
     }
 
     @Override
@@ -256,7 +264,7 @@ public class PullToRefreshSampleActivity extends FragmentActivity implements IXL
 
     @Override
     public void onRefresh() {
-        AddItemToContainer(++currentPage, 1);
+        AddItemToContainer(currentPage, 1);
 
     }
 
