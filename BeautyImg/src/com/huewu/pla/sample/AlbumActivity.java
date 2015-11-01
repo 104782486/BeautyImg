@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -110,6 +114,7 @@ public class AlbumActivity extends Activity {
 		@Override
 		public View instantiateItem(ViewGroup container, int position) {
 			photoView = new PhotoView(container.getContext());
+            final String url = imageUrls.get(position);
 			new DownLoadImage(photoView).execute(new String[] { imageUrls.get(position) });
 			Log.i("zhangx","POSITION:"+position+";当前显示图片："+imageUrls.get(position));
 			container.addView(photoView, LayoutParams.MATCH_PARENT,
@@ -131,7 +136,7 @@ public class AlbumActivity extends Activity {
 									Bitmap imageBitmap = photoView.getDrawingCache();
 									if (imageBitmap != null) {
 										new SaveImageTask()
-												.execute(imageBitmap);
+												.execute(url);
 									}
 								}
 							});
@@ -154,9 +159,9 @@ public class AlbumActivity extends Activity {
 
 	}
 
-	private class SaveImageTask extends AsyncTask<Bitmap, Void, String> {
+	private class SaveImageTask extends AsyncTask<String, Void, String> {
 		@Override
-		protected String doInBackground(Bitmap... params) {
+		protected String doInBackground(String... params) {
 			String result = getResources().getString(
 					R.string.save_picture_failed);
 			try {
@@ -170,8 +175,19 @@ public class AlbumActivity extends Activity {
 				File imageFile = new File(file.getAbsolutePath(),
 						new Date().getTime() + ".jpg");
 				FileOutputStream outStream = new FileOutputStream(imageFile);
-				Bitmap image = params[0];
-				image.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+				String url = params[0];
+                HttpURLConnection conn;
+                URL imageurl = new URL(url);
+                conn = (HttpURLConnection)imageurl.openConnection();//.setConnectTimeout(3000);
+        	    conn.setConnectTimeout(3000);
+                InputStream is = imageurl.openStream();  
+                
+                int read = -1;
+                byte[] buf = new byte[2048];
+                while((read = is.read(buf)) != -1){
+                    outStream.write(buf, 0, read);
+                }
+
 				outStream.flush();
 				outStream.close();
 				result = getResources().getString(
